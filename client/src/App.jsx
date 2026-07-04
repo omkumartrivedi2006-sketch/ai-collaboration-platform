@@ -19,10 +19,12 @@ import { SettingsProvider } from './context/SettingsContext';
 import { ThemeProvider } from './context/ThemeContext';
 import AppRoutes from './routes/AppRoutes';
 import { Toaster } from 'react-hot-toast';
+import ErrorBoundary from './components/ErrorBoundary';
 
 function App() {
   return (
-    <BrowserRouter>
+    <ErrorBoundary>
+      <BrowserRouter>
       <AuthProvider>
         <ProjectProvider>
           <TaskProvider>
@@ -71,7 +73,8 @@ function App() {
           }}
         />
       </AuthProvider>
-    </BrowserRouter>
+      </BrowserRouter>
+    </ErrorBoundary>
   );
 }
 
