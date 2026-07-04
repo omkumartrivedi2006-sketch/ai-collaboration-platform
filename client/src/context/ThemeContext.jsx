@@ -1,23 +1,32 @@
 import React, { createContext, useContext, useEffect } from 'react';
 import { useSettings } from './SettingsContext';
+import { useAuth } from './AuthContext';
 
 const ThemeContext = createContext(null);
 
 export const ThemeProvider = ({ children }) => {
+  const { user } = useAuth();
   const { preferences, fetchPreferences } = useSettings();
 
   useEffect(() => {
-    if (!preferences) {
+    if (user && !preferences) {
       fetchPreferences();
     }
-  }, [preferences, fetchPreferences]);
+  }, [user, preferences, fetchPreferences]);
 
   // Enforce appearance and accessibility classes on HTML root body element
   useEffect(() => {
-    if (!preferences) return;
-
     const root = document.documentElement;
-    const { theme, fontSize, highContrast, reducedMotion } = preferences;
+    
+    // Fall back to default styling settings if not authenticated
+    const activePrefs = preferences || {
+      theme: 'SYSTEM',
+      fontSize: 'medium',
+      highContrast: false,
+      reducedMotion: false
+    };
+
+    const { theme, fontSize, highContrast, reducedMotion } = activePrefs;
 
     // 1. Theme class handling (Dark / Light / System)
     root.classList.remove('dark');
