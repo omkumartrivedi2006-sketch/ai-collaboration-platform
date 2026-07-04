@@ -11,6 +11,12 @@ import { FileProvider } from './context/FileContext';
 import { FolderProvider } from './context/FolderContext';
 import { UploadProvider } from './context/UploadContext';
 import { MeetingProvider } from './context/MeetingContext';
+import { AIProvider } from './context/AIContext';
+import { AnalyticsProvider } from './context/AnalyticsContext';
+import { ReportsProvider } from './context/ReportsContext';
+import { AdminProvider } from './context/AdminContext';
+import { SettingsProvider } from './context/SettingsContext';
+import { ThemeProvider } from './context/ThemeContext';
 import AppRoutes from './routes/AppRoutes';
 import { Toaster } from 'react-hot-toast';
 
@@ -28,7 +34,19 @@ function App() {
                       <FileProvider>
                         <UploadProvider>
                           <MeetingProvider>
-                            <AppRoutes />
+                            <AIProvider>
+                              <AnalyticsProvider>
+                                <ReportsProvider>
+                                  <AdminProvider>
+                                    <SettingsProvider>
+                                      <ThemeProvider>
+                                        <AppRoutes />
+                                      </ThemeProvider>
+                                    </SettingsProvider>
+                                  </AdminProvider>
+                                </ReportsProvider>
+                              </AnalyticsProvider>
+                            </AIProvider>
                           </MeetingProvider>
                         </UploadProvider>
                       </FileProvider>

@@ -7,6 +7,14 @@ import cookieParser from 'cookie-parser';
 import rateLimit from 'express-rate-limit';
 import path from 'path';
 import http from 'http';
+import { validateEnvironment } from './config/env';
+import { helmetConfig, corsConfig, rateLimiter, sanitizeInput } from './middleware/securityMiddleware';
+import { monitorMiddleware } from './middleware/monitorMiddleware';
+
+
+// Verify required env variables at startup
+validateEnvironment();
+
 
 import authRouter from './routes/authRoutes';
 import projectRouter from './routes/projectRoutes';
@@ -16,6 +24,13 @@ import notificationRouter from './routes/notificationRoutes';
 import fileRouter from './routes/fileRoutes';
 import folderRouter from './routes/folderRoutes';
 import meetingRouter from './routes/meetingRoutes';
+import aiRouter from './routes/aiRoutes';
+import analyticsRouter from './routes/analyticsRoutes';
+import reportRouter from './routes/reportRoutes';
+import adminRouter from './routes/adminRoutes';
+import settingsRouter from './routes/settingsRoutes';
+
+
 
 import { globalErrorHandler, notFoundHandler } from './middleware/errorMiddleware';
 import { initSocketServer } from './socket/socketServer';
@@ -25,27 +40,13 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-app.use(helmet());
-app.use(
-  cors({
-    origin: process.env.CLIENT_URL || 'http://localhost:5173',
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-    allowedHeaders: ['Content-Type', 'Authorization']
-  })
-);
+app.use(helmetConfig);
+app.use(corsConfig);
+app.use('/api', rateLimiter);
+app.use(sanitizeInput);
+app.use(monitorMiddleware);
 
-const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, 
-  max: 100, 
-  message: {
-    status: 'error',
-    message: 'Too many requests from this IP, please try again after 15 minutes.'
-  },
-  standardHeaders: true,
-  legacyHeaders: false
-});
-app.use('/api', apiLimiter);
+
 
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
@@ -72,6 +73,11 @@ app.use('/api/notifications', notificationRouter);
 app.use('/api/files', fileRouter);
 app.use('/api/folders', folderRouter);
 app.use('/api/meetings', meetingRouter);
+app.use('/api/ai', aiRouter);
+app.use('/api/analytics', analyticsRouter);
+app.use('/api/reports', reportRouter);
+app.use('/api/admin', adminRouter);
+app.use('/api/settings', settingsRouter);
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 app.use(notFoundHandler);

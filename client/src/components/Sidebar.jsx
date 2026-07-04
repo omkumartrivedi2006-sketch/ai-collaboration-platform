@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, User, LogOut, ShieldAlert, Users, Building, FolderGit2, CheckSquare, MessageSquare, Bell, FolderOpen, Video } from 'lucide-react';
+import { LayoutDashboard, User, LogOut, ShieldAlert, Users, Building, FolderGit2, CheckSquare, MessageSquare, Bell, FolderOpen, Video, Sparkles, Brain, TrendingUp, Briefcase, Award, FileText, UserCheck, History, Settings } from 'lucide-react';
 import useAuth from '../hooks/useAuth';
 import { useNotifications } from '../context/NotificationContext';
 import Avatar from './Avatar';
@@ -32,6 +32,48 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
       name: 'Meetings',
       path: '/meetings',
       icon: Video,
+      roles: ['Admin', 'Manager', 'Employee']
+    },
+    {
+      name: 'AI Assistant',
+      path: '/ai-assistant',
+      icon: Sparkles,
+      roles: ['Admin', 'Manager', 'Employee']
+    },
+    {
+      name: 'AI Reports',
+      path: '/ai-reports',
+      icon: Brain,
+      roles: ['Admin', 'Manager', 'Employee']
+    },
+    {
+      name: 'Analytics Dashboard',
+      path: '/analytics',
+      icon: TrendingUp,
+      roles: ['Admin', 'Manager', 'Employee']
+    },
+    {
+      name: 'Project Analytics',
+      path: '/analytics/projects',
+      icon: Briefcase,
+      roles: ['Admin', 'Manager', 'Employee']
+    },
+    {
+      name: 'Team Workloads',
+      path: '/analytics/team',
+      icon: Users,
+      roles: ['Admin', 'Manager']
+    },
+    {
+      name: 'Productivity Ratings',
+      path: '/analytics/employees',
+      icon: Award,
+      roles: ['Admin', 'Manager', 'Employee']
+    },
+    {
+      name: 'Reports Catalog',
+      path: '/analytics/reports',
+      icon: FileText,
       roles: ['Admin', 'Manager', 'Employee']
     },
     {
@@ -69,6 +111,36 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
       path: '/admin',
       icon: ShieldAlert,
       roles: ['Admin']
+    },
+    {
+      name: 'User Directories',
+      path: '/admin/users',
+      icon: UserCheck,
+      roles: ['Admin']
+    },
+    {
+      name: 'Departments Panel',
+      path: '/admin/departments',
+      icon: Briefcase,
+      roles: ['Admin']
+    },
+    {
+      name: 'Audit Timeline Logs',
+      path: '/admin/audit-logs',
+      icon: History,
+      roles: ['Admin']
+    },
+    {
+      name: 'Workspace Settings',
+      path: '/admin/settings',
+      icon: Settings,
+      roles: ['Admin']
+    },
+    {
+      name: 'Account Settings',
+      path: '/settings',
+      icon: Settings,
+      roles: ['Admin', 'Manager', 'Employee']
     }
   ];
 

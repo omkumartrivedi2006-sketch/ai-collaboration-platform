@@ -3,6 +3,7 @@ import { AppError } from '../utils/AppError';
 import { signToken } from '../utils/jwt';
 import bcrypt from 'bcrypt';
 import { User, Role } from '@prisma/client';
+import prisma from '../config/db';
 
 export class AuthService {
   private userRepository: UserRepository;
@@ -12,7 +13,23 @@ export class AuthService {
   }
 
   async register(data: any): Promise<{ user: User; token: string }> {
-    const existingUser = await this.userRepository.findByEmail(data.email);
+    let assignedRole = data.role as Role || Role.Employee;
+    let assignedDeptId: string | null = data.departmentId || null;
+    let email = data.email;
+
+    if (data.invitationToken) {
+      const invitation = await prisma.invitation.findUnique({
+        where: { token: data.invitationToken }
+      });
+      if (!invitation || invitation.status !== 'PENDING' || new Date() > invitation.expiresAt) {
+        throw new AppError('Invalid or expired invitation token', 400);
+      }
+      email = invitation.email;
+      assignedRole = invitation.role;
+      assignedDeptId = invitation.departmentId;
+    }
+
+    const existingUser = await this.userRepository.findByEmail(email);
     if (existingUser) {
       throw new AppError('Email already registered', 400);
     }
@@ -21,14 +38,21 @@ export class AuthService {
 
     const newUser = await this.userRepository.create({
       name: data.name,
-      email: data.email,
+      email,
       password: hashedPassword,
-      role: data.role as Role,
+      role: assignedRole,
       phone: data.phone,
-      department: data.department,
+      memberDepartment: assignedDeptId ? { connect: { id: assignedDeptId } } : undefined,
       designation: data.designation,
       avatar: data.avatar || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(data.name)}`,
     });
+
+    if (data.invitationToken) {
+      await prisma.invitation.update({
+        where: { token: data.invitationToken },
+        data: { status: 'ACCEPTED' }
+      });
+    }
 
     const token = signToken({ id: newUser.id, role: newUser.role });
 

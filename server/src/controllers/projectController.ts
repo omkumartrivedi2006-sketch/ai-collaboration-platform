@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { ProjectService } from '../services/projectService';
 import { Role } from '@prisma/client';
+import { logUserAction } from '../middleware/auditMiddleware';
 
 const projectService = new ProjectService();
 
@@ -10,6 +11,8 @@ export const createProject = async (req: Request, res: Response, next: NextFunct
     const creatorRole = req.user!.role as Role;
 
     const project = await projectService.createProject(req.body, creatorId, creatorRole);
+
+    await logUserAction(creatorId, 'Project Created', 'Project', project.id, null, project, req);
 
     res.status(201).json({
       status: 'success',

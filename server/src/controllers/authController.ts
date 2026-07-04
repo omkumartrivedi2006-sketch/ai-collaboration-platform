@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { AuthService } from '../services/authService';
 import { UserService } from '../services/userService';
+import { logUserAction } from '../middleware/auditMiddleware';
 
 const authService = new AuthService();
 const userService = new UserService();
@@ -49,6 +50,9 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
     const { email, password } = req.body;
     const { user, token } = await authService.login(email, password);
 
+    // Audit Log Login
+    await logUserAction(user.id, 'Login', 'User', user.id, null, null, req);
+
     res.cookie('token', token, getCookieOptions());
 
     res.status(200).json({
@@ -78,6 +82,10 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
 
 export const logout = async (req: Request, res: Response, next: NextFunction) => {
   try {
+    if (req.user) {
+      await logUserAction(req.user.id, 'Logout', 'User', req.user.id, null, null, req);
+    }
+
     res.clearCookie('token', {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',

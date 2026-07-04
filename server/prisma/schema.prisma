@@ -67,6 +67,19 @@ model User {
   meetingParticipations    MeetingParticipant[]
   meetingChatMessages      MeetingChatMessage[]
   meetingAttachments       MeetingAttachment[]
+  aiConversations          AIConversation[]
+  aiRequestLogs            AIRequestLog[]
+  generatedReports         GeneratedReport[]
+  departmentId             String?           @db.Uuid
+  memberDepartment         Department?       @relation("DepartmentMembers", fields: [departmentId], references: [id], onDelete: SetNull)
+  managedDepartments       Department[]      @relation("DepartmentManager")
+  auditLogs                AuditLog[]
+  bio                      String?
+  website                  String?
+  location                 String?
+  preferences              UserPreference?
+  sessions                 UserSession[]
+  trustedDevices           TrustedDevice[]
 
   @@index([email])
 }
@@ -92,9 +105,10 @@ model Project {
   activities   ProjectActivity[]
   tasks        Task[]
   conversation Conversation?
-  files        File[]
-  folders      Folder[]
-  meetings     Meeting[]
+  files            File[]
+  folders          Folder[]
+  meetings         Meeting[]
+  generatedReports GeneratedReport[]
 
   @@index([code])
 }
@@ -156,10 +170,11 @@ model Task {
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
 
-  comments       TaskComment[]
-  attachments    TaskAttachment[]
-  activities     TaskActivity[]
-  files          File[]
+  comments         TaskComment[]
+  attachments      TaskAttachment[]
+  activities       TaskActivity[]
+  files            File[]
+  generatedReports GeneratedReport[]
 
   @@index([projectId])
   @@index([assignedTo])
@@ -423,9 +438,10 @@ model Meeting {
   createdAt    DateTime             @default(now())
   updatedAt    DateTime             @updatedAt
 
-  participants MeetingParticipant[]
-  attachments  MeetingAttachment[]
-  chatMessages MeetingChatMessage[]
+  participants     MeetingParticipant[]
+  attachments      MeetingAttachment[]
+  chatMessages     MeetingChatMessage[]
+  generatedReports GeneratedReport[]
 
   @@index([projectId])
   @@index([organizerId])
@@ -473,4 +489,236 @@ model MeetingAttachment {
   @@index([meetingId])
   @@index([fileId])
   @@index([uploadedBy])
+}
+
+enum AIRole {
+  USER
+  ASSISTANT
+  SYSTEM
+}
+
+enum AIReportType {
+  PROJECT
+  MEETING
+  TASK
+  SPRINT
+}
+
+model AIConversation {
+  id        String      @id @default(uuid()) @db.Uuid
+  userId    String      @db.Uuid
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  messages  AIMessage[]
+
+  @@index([userId])
+}
+
+model AIMessage {
+  id             String         @id @default(uuid()) @db.Uuid
+  conversationId String         @db.Uuid
+  conversation   AIConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  role           AIRole
+  content        String
+  tokens         Int?
+  createdAt      DateTime       @default(now())
+
+  @@index([conversationId])
+}
+
+model AIRequestLog {
+  id               String   @id @default(uuid()) @db.Uuid
+  userId           String   @db.Uuid
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  feature          String
+  provider         String
+  promptTokens     Int
+  completionTokens Int
+  totalTokens      Int
+  responseTime     Int
+  status           String
+  createdAt        DateTime @default(now())
+
+  @@index([userId])
+}
+
+model GeneratedReport {
+  id          String       @id @default(uuid()) @db.Uuid
+  projectId   String?      @db.Uuid
+  project     Project?     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  meetingId   String?      @db.Uuid
+  meeting     Meeting?     @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  taskId      String?      @db.Uuid
+  task        Task?        @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  title       String
+  content     String
+  type        AIReportType
+  generatedBy String       @db.Uuid
+  creator     User         @relation(fields: [generatedBy], references: [id], onDelete: Cascade)
+  createdAt   DateTime     @default(now())
+
+  @@index([projectId])
+  @@index([meetingId])
+  @@index([taskId])
+  @@index([generatedBy])
+}
+
+model AnalyticsSnapshot {
+  id          String   @id @default(uuid()) @db.Uuid
+  generatedAt DateTime @default(now())
+  projectId   String?  @db.Uuid
+  teamId      String?  @db.Uuid
+  payload     Json
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
+  REVOKED
+}
+
+model Organization {
+  id           String       @id @default(uuid()) @db.Uuid
+  name         String
+  logo         String?
+  website      String?
+  industry     String?
+  address      String?
+  phone        String?
+  email        String?
+  timezone     String?      @default("UTC")
+  language     String?      @default("en")
+  brandColors  String?      @default("#4f46e5")
+  workingDays  String?      @default("Monday,Tuesday,Wednesday,Thursday,Friday")
+  workingHours String?      @default("09:00-17:00")
+  departments  Department[]
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+}
+
+model Department {
+  id             String       @id @default(uuid()) @db.Uuid
+  name           String
+  description    String?
+  managerId      String?      @db.Uuid
+  manager        User?        @relation("DepartmentManager", fields: [managerId], references: [id], onDelete: SetNull)
+  organizationId String?      @db.Uuid
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  users          User[]       @relation("DepartmentMembers")
+  invitations    Invitation[]
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+}
+
+model SystemPermission {
+  id          String           @id @default(uuid()) @db.Uuid
+  name        String           @unique
+  description String?
+  module      String
+  roles       RolePermission[]
+}
+
+model RolePermission {
+  id           String           @id @default(uuid()) @db.Uuid
+  role         Role
+  permissionId String           @db.Uuid
+  permission   SystemPermission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  
+  @@unique([role, permissionId])
+}
+
+model AuditLog {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String?  @db.Uuid
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action    String
+  entity    String
+  entityId  String?
+  oldValue  Json?
+  newValue  Json?
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+}
+
+model Invitation {
+  id           String           @id @default(uuid()) @db.Uuid
+  email        String
+  role         Role             @default(Employee)
+  departmentId String?          @db.Uuid
+  department   Department?      @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  token        String           @unique
+  expiresAt    DateTime
+  status       InvitationStatus @default(PENDING)
+  createdAt    DateTime         @default(now())
+}
+
+enum Theme {
+  LIGHT
+  DARK
+  SYSTEM
+}
+
+enum Language {
+  ENGLISH
+  HINDI
+  SPANISH
+  FRENCH
+  GERMAN
+}
+
+model UserPreference {
+  id                     String   @id @default(uuid()) @db.Uuid
+  userId                 String   @unique @db.Uuid
+  user                   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  theme                  Theme    @default(SYSTEM)
+  language               Language @default(ENGLISH)
+  timezone               String   @default("UTC")
+  dateFormat             String   @default("YYYY-MM-DD")
+  timeFormat             String   @default("24h")
+  sidebarCollapsed       Boolean  @default(false)
+  compactMode            Boolean  @default(false)
+  emailNotifications     Boolean  @default(true)
+  pushNotifications      Boolean  @default(true)
+  meetingReminders       Boolean  @default(true)
+  taskReminders          Boolean  @default(true)
+  projectUpdates         Boolean  @default(true)
+  chatNotifications      Boolean  @default(true)
+  highContrast           Boolean  @default(false)
+  reducedMotion          Boolean  @default(false)
+  fontSize               String   @default("medium")
+  profileVisibility      String   @default("public")
+  activityVisibility     String   @default("public")
+  onlineStatusVisibility String   @default("public")
+  aiDataSharing          Boolean  @default(true)
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+}
+
+model UserSession {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String   @db.Uuid
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  device     String
+  browser    String
+  ipAddress  String
+  location   String?
+  lastActive DateTime @default(now())
+  createdAt  DateTime @default(now())
+
+  @@index([userId])
+}
+
+model TrustedDevice {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String   @db.Uuid
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deviceName String
+  fingerprint String
+  lastUsed   DateTime @default(now())
+
+  @@index([userId])
 }

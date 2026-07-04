@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import useAuth from '../hooks/useAuth';
 import Avatar from './Avatar';
 import EmojiPicker from './EmojiPicker';
+import TranslationCard from './TranslationCard';
 import { CornerUpLeft, Edit3, Trash2, FileText, Image as ImageIcon, CheckCheck } from 'lucide-react';
 
 const MessageBubble = ({ message, onReply, onEdit, onDelete, onAddReaction, onRemoveReaction }) => {
@@ -112,7 +113,10 @@ const MessageBubble = ({ message, onReply, onEdit, onDelete, onAddReaction, onRe
                   <span className="truncate max-w-[160px]">{message.message.split('/').pop()}</span>
                 </a>
               ) : (
-                <p className="whitespace-pre-wrap">{message.message}</p>
+                <div>
+                  <p className="whitespace-pre-wrap">{message.message}</p>
+                  <TranslationCard originalText={message.message} />
+                </div>
               )}
             </div>
           )}

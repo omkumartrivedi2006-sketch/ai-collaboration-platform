@@ -5,6 +5,7 @@ import { AppError } from '../utils/AppError';
 
 import { FileService } from '../services/fileService';
 import prisma from '../config/db';
+import { logUserAction } from '../middleware/auditMiddleware';
 
 const taskService = new TaskService();
 const fileService = new FileService();
@@ -152,7 +153,13 @@ export const deleteTask = async (req: Request, res: Response, next: NextFunction
     const userId = req.user!.id;
     const role = req.user!.role as Role;
 
+    const task = await prisma.task.findUnique({ where: { id: req.params.id } });
+
     await taskService.deleteTask(req.params.id, userId, role);
+
+    if (task) {
+      await logUserAction(userId, 'Task Deleted', 'Task', req.params.id, task, null, req);
+    }
 
     res.status(200).json({
       status: 'success',

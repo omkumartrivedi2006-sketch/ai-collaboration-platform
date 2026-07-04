@@ -10,7 +10,7 @@ import Card from '../components/Card';
 import Modal from '../components/Modal';
 import Button from '../components/Button';
 import Loader from '../components/Loader';
-import { FileText, Save, Video, ArrowLeft } from 'lucide-react';
+import { FileText, Save, Video, ArrowLeft, Sparkles } from 'lucide-react';
 import api from '../services/api';
 import toast from 'react-hot-toast';
 
@@ -134,14 +134,24 @@ export const MeetingDetails = () => {
                   Secure HD enterprise room encrypted with Jitsi externe SDK
                 </p>
               </div>
-              <Button
-                size="sm"
-                onClick={() => navigate(`/meetings/${activeMeeting.id}/join`)}
-                className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-750 text-white font-bold cursor-pointer inline-flex items-center justify-center gap-1.5"
-              >
-                <Video className="h-4 w-4" />
-                <span>Join Conference Now</span>
-              </Button>
+              <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                <Button
+                  size="sm"
+                  onClick={() => navigate(`/meetings/${activeMeeting.id}/summary`)}
+                  className="w-full sm:w-auto bg-slate-805 hover:bg-slate-700 text-white font-bold cursor-pointer inline-flex items-center justify-center gap-1.5 border border-slate-700"
+                >
+                  <Sparkles className="h-4 w-4 text-indigo-400" />
+                  <span>AI Summarizer</span>
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => navigate(`/meetings/${activeMeeting.id}/join`)}
+                  className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-750 text-white font-bold cursor-pointer inline-flex items-center justify-center gap-1.5"
+                >
+                  <Video className="h-4 w-4" />
+                  <span>Join Conference Now</span>
+                </Button>
+              </div>
             </div>
           </Card>
 
