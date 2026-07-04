@@ -63,6 +63,10 @@ model User {
   uploadedFiles            File[]               @relation("FileUploader")
   uploadedFileVersions     FileVersion[]        @relation("FileVersionUploader")
   filePermissions          FilePermission[]
+  meetingsOrganized        Meeting[]            @relation("MeetingOrganizer")
+  meetingParticipations    MeetingParticipant[]
+  meetingChatMessages      MeetingChatMessage[]
+  meetingAttachments       MeetingAttachment[]
 
   @@index([email])
 }
@@ -90,6 +94,7 @@ model Project {
   conversation Conversation?
   files        File[]
   folders      Folder[]
+  meetings     Meeting[]
 
   @@index([code])
 }
@@ -343,8 +348,9 @@ model File {
   isDeleted    Boolean          @default(false)
   createdAt    DateTime         @default(now())
   updatedAt    DateTime         @updatedAt
-  versions     FileVersion[]
-  permissions  FilePermission[]
+  versions           FileVersion[]
+  permissions        FilePermission[]
+  meetingAttachments MeetingAttachment[]
 
   @@index([folderId])
   @@index([projectId])
@@ -376,4 +382,95 @@ model FilePermission {
   @@unique([fileId, userId])
   @@index([fileId])
   @@index([userId])
+}
+
+enum MeetingStatus {
+  SCHEDULED
+  LIVE
+  COMPLETED
+  CANCELLED
+}
+
+enum AttendanceStatus {
+  INVITED
+  ACCEPTED
+  DECLINED
+  ATTENDED
+  ABSENT
+}
+
+enum ParticipantRole {
+  HOST
+  CO_HOST
+  PARTICIPANT
+}
+
+model Meeting {
+  id           String               @id @default(uuid()) @db.Uuid
+  title        String
+  description  String?
+  projectId    String?              @db.Uuid
+  project      Project?             @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  organizerId  String               @db.Uuid
+  organizer    User                 @relation("MeetingOrganizer", fields: [organizerId], references: [id], onDelete: Cascade)
+  meetingLink  String
+  startTime    DateTime
+  endTime      DateTime
+  timezone     String
+  status       MeetingStatus        @default(SCHEDULED)
+  recordingUrl String?
+  notes        String?
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+
+  participants MeetingParticipant[]
+  attachments  MeetingAttachment[]
+  chatMessages MeetingChatMessage[]
+
+  @@index([projectId])
+  @@index([organizerId])
+}
+
+model MeetingParticipant {
+  id               String           @id @default(uuid()) @db.Uuid
+  meetingId        String           @db.Uuid
+  meeting          Meeting          @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  userId           String           @db.Uuid
+  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role             ParticipantRole  @default(PARTICIPANT)
+  attendanceStatus AttendanceStatus @default(INVITED)
+  joinedAt         DateTime?
+  leftAt           DateTime?
+
+  @@unique([meetingId, userId])
+  @@index([meetingId])
+  @@index([userId])
+}
+
+model MeetingChatMessage {
+  id        String   @id @default(uuid()) @db.Uuid
+  meetingId String   @db.Uuid
+  meeting   Meeting  @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  senderId  String   @db.Uuid
+  sender    User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  message   String
+  createdAt DateTime @default(now())
+
+  @@index([meetingId])
+  @@index([senderId])
+}
+
+model MeetingAttachment {
+  id         String   @id @default(uuid()) @db.Uuid
+  meetingId  String   @db.Uuid
+  meeting    Meeting  @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  fileId     String   @db.Uuid
+  file       File     @relation(fields: [fileId], references: [id], onDelete: Cascade)
+  uploadedBy String   @db.Uuid
+  uploader   User     @relation(fields: [uploadedBy], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@index([meetingId])
+  @@index([fileId])
+  @@index([uploadedBy])
 }

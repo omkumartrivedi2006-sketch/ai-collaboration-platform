@@ -15,6 +15,7 @@ import chatRouter from './routes/chatRoutes';
 import notificationRouter from './routes/notificationRoutes';
 import fileRouter from './routes/fileRoutes';
 import folderRouter from './routes/folderRoutes';
+import meetingRouter from './routes/meetingRoutes';
 
 import { globalErrorHandler, notFoundHandler } from './middleware/errorMiddleware';
 import { initSocketServer } from './socket/socketServer';
@@ -70,6 +71,7 @@ app.use('/api/chat', chatRouter);
 app.use('/api/notifications', notificationRouter);
 app.use('/api/files', fileRouter);
 app.use('/api/folders', folderRouter);
+app.use('/api/meetings', meetingRouter);
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 app.use(notFoundHandler);

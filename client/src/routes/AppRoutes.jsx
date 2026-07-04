@@ -26,6 +26,10 @@ import ChatDashboard from '../pages/ChatDashboard';
 import NotificationCenter from '../pages/NotificationCenter';
 import FilesDashboard from '../pages/FilesDashboard';
 import ProjectFiles from '../pages/ProjectFiles';
+import MeetingsDashboard from '../pages/MeetingsDashboard';
+import MeetingDetails from '../pages/MeetingDetails';
+import JoinMeeting from '../pages/JoinMeeting';
+import CalendarView from '../pages/CalendarView';
 
 import ProtectedRoute from '../components/ProtectedRoute';
 import RoleGuard from '../components/RoleGuard';
@@ -99,6 +103,12 @@ const AppRoutes = () => {
         {/* Files & Document Management routes */}
         <Route path="files" element={<FilesDashboard />} />
         <Route path="projects/:id/files" element={<ProjectFiles />} />
+        
+        {/* Meetings & Video Conferencing routes */}
+        <Route path="meetings" element={<MeetingsDashboard />} />
+        <Route path="meetings/calendar" element={<CalendarView />} />
+        <Route path="meetings/:id" element={<MeetingDetails />} />
+        <Route path="meetings/:id/join" element={<JoinMeeting />} />
 
         <Route
           path="team"

@@ -10,6 +10,7 @@ import { NotificationProvider } from './context/NotificationContext';
 import { FileProvider } from './context/FileContext';
 import { FolderProvider } from './context/FolderContext';
 import { UploadProvider } from './context/UploadContext';
+import { MeetingProvider } from './context/MeetingContext';
 import AppRoutes from './routes/AppRoutes';
 import { Toaster } from 'react-hot-toast';
 
@@ -26,7 +27,9 @@ function App() {
                     <FolderProvider>
                       <FileProvider>
                         <UploadProvider>
-                          <AppRoutes />
+                          <MeetingProvider>
+                            <AppRoutes />
+                          </MeetingProvider>
                         </UploadProvider>
                       </FileProvider>
                     </FolderProvider>

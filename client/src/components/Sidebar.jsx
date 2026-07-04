@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, User, LogOut, ShieldAlert, Users, Building, FolderGit2, CheckSquare, MessageSquare, Bell, FolderOpen } from 'lucide-react';
+import { LayoutDashboard, User, LogOut, ShieldAlert, Users, Building, FolderGit2, CheckSquare, MessageSquare, Bell, FolderOpen, Video } from 'lucide-react';
 import useAuth from '../hooks/useAuth';
 import { useNotifications } from '../context/NotificationContext';
 import Avatar from './Avatar';
@@ -26,6 +26,12 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
       name: 'File Manager',
       path: '/files',
       icon: FolderOpen,
+      roles: ['Admin', 'Manager', 'Employee']
+    },
+    {
+      name: 'Meetings',
+      path: '/meetings',
+      icon: Video,
       roles: ['Admin', 'Manager', 'Employee']
     },
     {

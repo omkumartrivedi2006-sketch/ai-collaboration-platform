@@ -13,6 +13,9 @@ import PriorityBadge from '../components/PriorityBadge';
 import Loader from '../components/Loader';
 import FileIcon from '../components/FileIcon';
 import fileService from '../services/fileService';
+import api from '../services/api';
+import toast from 'react-hot-toast';
+import { Video } from 'lucide-react';
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -26,6 +29,7 @@ const Dashboard = () => {
   const [recentFiles, setRecentFiles] = useState([]);
   const [recentDocs, setRecentDocs] = useState([]);
   const [storageSize, setStorageSize] = useState(0);
+  const [allMeetings, setAllMeetings] = useState([]);
 
   useEffect(() => {
     const loadDashboardData = async () => {
@@ -59,6 +63,13 @@ const Dashboard = () => {
         } catch (e) {
           console.error(e);
         }
+
+        try {
+          const meetingsRes = await api.get('/meetings');
+          setAllMeetings(meetingsRes.data.data.meetings || []);
+        } catch (e) {
+          console.error(e);
+        }
       } catch (err) {
         console.error('Failed to load dashboard statistics:', err);
       } finally {
@@ -71,6 +82,17 @@ const Dashboard = () => {
   if (loading) {
     return <Loader size="lg" fullPage />;
   }
+
+  const handleResponse = async (meetingId, response) => {
+    try {
+      await api.patch(`/meetings/${meetingId}/respond`, { response });
+      toast.success(`Invitation ${response === 'ACCEPT' ? 'accepted' : 'declined'}`);
+      const meetingsRes = await api.get('/meetings');
+      setAllMeetings(meetingsRes.data.data.meetings || []);
+    } catch (e) {
+      toast.error('Failed to submit response');
+    }
+  };
 
   // Calculate task statistics
   const myActiveTasks = tasks.filter(t => t.assignedTo === user?.id && t.status !== 'COMPLETED');
@@ -283,6 +305,95 @@ const Dashboard = () => {
 
         {/* Right Column: Deadlines & Online Team */}
         <div className="space-y-6">
+          {/* Today's Meetings & Invitations */}
+          <Card
+            title="Meetings Planner"
+            subtitle="Your agenda and invitations today"
+            headerActions={
+              <Link to="/meetings" className="text-xs font-bold text-indigo-650 hover:text-indigo-750 flex items-center gap-1">
+                Open Planner <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            }
+          >
+            <div className="space-y-4">
+              {/* Today's Schedule */}
+              <div className="space-y-2">
+                <h4 className="font-extrabold text-slate-805 uppercase tracking-wider text-[9px]">Today's Meetings</h4>
+                {allMeetings.filter(m => {
+                  const start = new Date(m.startTime);
+                  const today = new Date();
+                  return start.toDateString() === today.toDateString() && m.status !== 'CANCELLED';
+                }).map((m) => (
+                  <div key={m.id} className="flex items-center justify-between p-2 hover:bg-slate-50 border border-slate-100 rounded-lg transition-colors gap-2.5">
+                    <div className="min-w-0 flex-1">
+                      <Link to={`/meetings/${m.id}`} className="font-bold text-xs text-slate-800 hover:text-indigo-650 truncate block hover:underline">
+                        {m.title}
+                      </Link>
+                      <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">
+                        {new Date(m.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • {m.status}
+                      </p>
+                    </div>
+                    {(m.status === 'LIVE' || m.status === 'SCHEDULED') && (
+                      <Link
+                        to={`/meetings/${m.id}/join`}
+                        className="px-2.5 py-1 bg-indigo-650 hover:bg-indigo-750 text-white text-[10px] font-bold rounded-lg transition-colors flex items-center gap-1 shadow-xs cursor-pointer decoration-none"
+                      >
+                        <Video className="h-3 w-3" /> Join
+                      </Link>
+                    )}
+                  </div>
+                ))}
+                {allMeetings.filter(m => {
+                  const start = new Date(m.startTime);
+                  const today = new Date();
+                  return start.toDateString() === today.toDateString() && m.status !== 'CANCELLED';
+                }).length === 0 && (
+                  <p className="text-[10px] text-slate-405 italic font-bold">No meetings scheduled for today.</p>
+                )}
+              </div>
+
+              <div className="h-px bg-slate-100" />
+
+              {/* Pending Invitations */}
+              <div className="space-y-2">
+                <h4 className="font-extrabold text-slate-805 uppercase tracking-wider text-[9px]">Pending Invites</h4>
+                {allMeetings.filter(m => {
+                  const part = m.participants?.find(p => p.userId === user?.id);
+                  return part && part.attendanceStatus === 'INVITED' && m.status === 'SCHEDULED';
+                }).map((m) => (
+                  <div key={m.id} className="flex flex-col gap-1.5 p-2 bg-slate-50/50 border border-slate-150 rounded-lg">
+                    <Link to={`/meetings/${m.id}`} className="font-bold text-xs text-slate-800 hover:text-indigo-650 truncate block hover:underline">
+                      {m.title}
+                    </Link>
+                    <p className="text-[9px] text-slate-400 font-semibold uppercase tracking-wider">
+                      {new Date(m.startTime).toLocaleString()}
+                    </p>
+                    <div className="flex gap-2 justify-end mt-1">
+                      <button
+                        onClick={() => handleResponse(m.id, 'DECLINE')}
+                        className="px-2 py-0.5 bg-white hover:bg-rose-50 border border-slate-200 text-rose-600 text-[9px] font-bold rounded cursor-pointer transition-colors"
+                      >
+                        Decline
+                      </button>
+                      <button
+                        onClick={() => handleResponse(m.id, 'ACCEPT')}
+                        className="px-2 py-0.5 bg-indigo-650 hover:bg-indigo-750 text-white text-[9px] font-bold rounded cursor-pointer transition-colors"
+                      >
+                        Accept
+                      </button>
+                    </div>
+                  </div>
+                ))}
+                {allMeetings.filter(m => {
+                  const part = m.participants?.find(p => p.userId === user?.id);
+                  return part && part.attendanceStatus === 'INVITED' && m.status === 'SCHEDULED';
+                }).length === 0 && (
+                  <p className="text-[10px] text-slate-405 italic font-bold">No pending invitations.</p>
+                )}
+              </div>
+            </div>
+          </Card>
+
           {/* Online Team Members */}
           <Card title="Online Team" subtitle="Active colleagues right now">
             <div className="space-y-3">

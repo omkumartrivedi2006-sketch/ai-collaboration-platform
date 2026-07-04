@@ -165,6 +165,20 @@ CollabSphere integrates a complete Enterprise File & Document Management System 
 
 ---
 
+## Enterprise Meeting & Video Conferencing (Module 6)
+
+CollabSphere integrates a complete Enterprise Meeting Management and Video Conferencing System supporting scheduled syncs, calendar dashboards, and secure Jitsi Meet audio/video sessions.
+
+### 1. Key Features
+* **Meeting Scheduling Form**: Set titles, detailed agenda descriptions, start/end dates, timezone detection, associated projects, and user invite lists.
+* **Interactive Big Calendar**: Full calendar viewport supporting Month, Week, Day, and Agenda grids. Double-clicking any calendar slot allows quick event scheduling.
+* **Jitsi Meet Integration**: Seamless HD video rooms initialized dynamically using the Jitsi External API iframe. Custom user display names and muted mic/cam configuration on launch.
+* **Attendance & Presence Tracking**: Track acceptances, rejections, and actual attendance times. Database logs joining and leaving times for reporting.
+* **Dashboard Widgets**: Front page overview displaying Today's meetings, upcoming schedules, and actionable pending invitations.
+* **Activity Notifications**: Dispatches real-time systems alerts to users when invited, updated, or when a meeting goes live.
+
+---
+
 ## Deployment Guide
 
 ### Database (Neon / Supabase PostgreSQL)
