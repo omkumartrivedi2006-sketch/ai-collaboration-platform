@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Shield, Zap, Cpu, MessageSquare, Video, FileText, CheckCircle2 } from 'lucide-react';
+import { ArrowRight, Shield, Zap, Cpu, MessageSquare, Video, FileText, CheckCircle2, Users } from 'lucide-react';
 import Button from '../components/Button';
 
 const Landing = () => {

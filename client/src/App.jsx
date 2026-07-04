@@ -25,54 +25,54 @@ function App() {
   return (
     <ErrorBoundary>
       <BrowserRouter>
-      <AuthProvider>
-        <ProjectProvider>
-          <TaskProvider>
-            <SocketProvider>
-              <PresenceProvider>
-                <ChatProvider>
-                  <NotificationProvider>
-                    <FolderProvider>
-                      <FileProvider>
-                        <UploadProvider>
-                          <MeetingProvider>
-                            <AIProvider>
-                              <AnalyticsProvider>
-                                <ReportsProvider>
-                                  <AdminProvider>
-                                    <SettingsProvider>
-                                      <ThemeProvider>
-                                        <AppRoutes />
-                                      </ThemeProvider>
-                                    </SettingsProvider>
-                                  </AdminProvider>
-                                </ReportsProvider>
-                              </AnalyticsProvider>
-                            </AIProvider>
-                          </MeetingProvider>
-                        </UploadProvider>
-                      </FileProvider>
-                    </FolderProvider>
-                  </NotificationProvider>
-                </ChatProvider>
-              </PresenceProvider>
-            </SocketProvider>
-          </TaskProvider>
-        </ProjectProvider>
-        <Toaster
-          position="top-right"
-          toastOptions={{
-            duration: 4000,
-            style: {
-              background: '#0f172a',
-              color: '#f8fafc',
-              border: '1px solid #1e293b',
-              borderRadius: '0.75rem',
-              fontSize: '0.875rem'
-            }
-          }}
-        />
-      </AuthProvider>
+        <AuthProvider>
+          <ProjectProvider>
+            <TaskProvider>
+              <SocketProvider>
+                <PresenceProvider>
+                  <ChatProvider>
+                    <NotificationProvider>
+                      <FolderProvider>
+                        <FileProvider>
+                          <UploadProvider>
+                            <MeetingProvider>
+                              <AIProvider>
+                                <AnalyticsProvider>
+                                  <ReportsProvider>
+                                    <AdminProvider>
+                                      <SettingsProvider>
+                                        <ThemeProvider>
+                                          <AppRoutes />
+                                        </ThemeProvider>
+                                      </SettingsProvider>
+                                    </AdminProvider>
+                                  </ReportsProvider>
+                                </AnalyticsProvider>
+                              </AIProvider>
+                            </MeetingProvider>
+                          </UploadProvider>
+                        </FileProvider>
+                      </FolderProvider>
+                    </NotificationProvider>
+                  </ChatProvider>
+                </PresenceProvider>
+              </SocketProvider>
+            </TaskProvider>
+          </ProjectProvider>
+          <Toaster
+            position="top-right"
+            toastOptions={{
+              duration: 4000,
+              style: {
+                background: '#0f172a',
+                color: '#f8fafc',
+                border: '1px solid #1e293b',
+                borderRadius: '0.75rem',
+                fontSize: '0.875rem'
+              }
+            }}
+          />
+        </AuthProvider>
       </BrowserRouter>
     </ErrorBoundary>
   );
