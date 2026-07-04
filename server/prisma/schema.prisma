@@ -1,0 +1,379 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  Admin
+  Manager
+  Employee
+}
+
+enum ProjectStatus {
+  PLANNING
+  ACTIVE
+  ON_HOLD
+  COMPLETED
+  CANCELLED
+}
+
+enum ProjectPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+model User {
+  id                 String            @id @default(uuid()) @db.Uuid
+  name               String
+  email              String            @unique
+  password           String
+  role               Role              @default(Employee)
+  avatar             String?
+  department         String?
+  designation        String?
+  phone              String?
+  isActive                 Boolean              @default(true)
+  isOnline                 Boolean              @default(false)
+  lastSeen                 DateTime?
+  lastLogin                DateTime?
+  createdAt                DateTime             @default(now())
+  updatedAt                DateTime             @updatedAt
+  
+  createdProjects          Project[]            @relation("ProjectCreator")
+  managedProjects          Project[]            @relation("ProjectManager")
+  projectMemberships       ProjectMember[]
+  activities               ProjectActivity[]
+  assignedTasks            Task[]               @relation("TaskAssignee")
+  createdTasks             Task[]               @relation("TaskCreator")
+  taskComments             TaskComment[]
+  taskAttachments          TaskAttachment[]
+  taskActivities           TaskActivity[]
+  conversationsCreated     Conversation[]       @relation("ConversationCreator")
+  conversationMemberships  ConversationMember[]
+  messagesSent             Message[]            @relation("MessageSender")
+  messageReactions         MessageReaction[]
+  notifications            Notification[]
+  createdFolders           Folder[]             @relation("FolderCreator")
+  uploadedFiles            File[]               @relation("FileUploader")
+  uploadedFileVersions     FileVersion[]        @relation("FileVersionUploader")
+  filePermissions          FilePermission[]
+
+  @@index([email])
+}
+
+model Project {
+  id          String            @id @default(uuid()) @db.Uuid
+  name        String
+  code        String            @unique
+  description String?
+  status      ProjectStatus     @default(PLANNING)
+  priority    ProjectPriority   @default(MEDIUM)
+  startDate   DateTime?
+  deadline    DateTime?
+  createdBy   String            @db.Uuid
+  creator     User              @relation("ProjectCreator", fields: [createdBy], references: [id])
+  managerId   String            @db.Uuid
+  manager     User              @relation("ProjectManager", fields: [managerId], references: [id])
+  isArchived  Boolean           @default(false)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  members      ProjectMember[]
+  activities   ProjectActivity[]
+  tasks        Task[]
+  conversation Conversation?
+  files        File[]
+  folders      Folder[]
+
+  @@index([code])
+}
+
+model ProjectMember {
+  id        String   @id @default(uuid()) @db.Uuid
+  projectId String   @db.Uuid
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  userId    String   @db.Uuid
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  joinedAt  DateTime @default(now())
+
+  @@unique([projectId, userId])
+}
+
+model ProjectActivity {
+  id        String   @id @default(uuid()) @db.Uuid
+  projectId String   @db.Uuid
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  userId    String   @db.Uuid
+  user      User     @relation(fields: [userId], references: [id])
+  action    String
+  createdAt DateTime @default(now())
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  IN_REVIEW
+  BLOCKED
+  COMPLETED
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+model Task {
+  id             String           @id @default(uuid()) @db.Uuid
+  projectId      String           @db.Uuid
+  project        Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  title          String
+  description    String?
+  status         TaskStatus       @default(TODO)
+  priority       TaskPriority     @default(MEDIUM)
+  assignedTo     String?          @db.Uuid
+  assignee       User?            @relation("TaskAssignee", fields: [assignedTo], references: [id], onDelete: SetNull)
+  createdBy      String           @db.Uuid
+  creator        User             @relation("TaskCreator", fields: [createdBy], references: [id])
+  estimatedHours Float?
+  actualHours    Float?
+  startDate      DateTime?
+  deadline       DateTime?
+  completedAt    DateTime?
+  isArchived     Boolean          @default(false)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  comments       TaskComment[]
+  attachments    TaskAttachment[]
+  activities     TaskActivity[]
+  files          File[]
+
+  @@index([projectId])
+  @@index([assignedTo])
+}
+
+model TaskComment {
+  id        String   @id @default(uuid()) @db.Uuid
+  taskId    String   @db.Uuid
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  userId    String   @db.Uuid
+  user      User     @relation(fields: [userId], references: [id])
+  comment   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([taskId])
+}
+
+model TaskAttachment {
+  id         String   @id @default(uuid()) @db.Uuid
+  taskId     String   @db.Uuid
+  task       Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  fileName   String
+  fileUrl    String
+  fileType   String
+  uploadedBy String   @db.Uuid
+  uploader   User     @relation(fields: [uploadedBy], references: [id])
+  createdAt  DateTime @default(now())
+
+  @@index([taskId])
+}
+
+model TaskActivity {
+  id        String   @id @default(uuid()) @db.Uuid
+  taskId     String   @db.Uuid
+  task       Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  userId    String   @db.Uuid
+  user      User     @relation(fields: [userId], references: [id])
+  action     String
+  oldValue   String?
+  newValue   String?
+  createdAt  DateTime @default(now())
+
+  @@index([taskId])
+}
+
+enum ConversationType {
+  DIRECT
+  GROUP
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  FILE
+  SYSTEM
+}
+
+enum NotificationType {
+  MESSAGE
+  PROJECT
+  TASK
+  SYSTEM
+}
+
+model Conversation {
+  id          String               @id @default(uuid()) @db.Uuid
+  type        ConversationType     @default(DIRECT)
+  projectId   String?              @unique @db.Uuid
+  project     Project?             @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  name        String?
+  createdBy   String               @db.Uuid
+  creator     User                 @relation("ConversationCreator", fields: [createdBy], references: [id])
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+  
+  members     ConversationMember[]
+  messages    Message[]
+
+  @@index([projectId])
+}
+
+model ConversationMember {
+  id             String       @id @default(uuid()) @db.Uuid
+  conversationId String       @db.Uuid
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  userId         String       @db.Uuid
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  joinedAt       DateTime     @default(now())
+  lastReadAt     DateTime     @default(now())
+
+  @@unique([conversationId, userId])
+}
+
+model Message {
+  id              String            @id @default(uuid()) @db.Uuid
+  conversationId  String            @db.Uuid
+  conversation    Conversation      @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderId        String            @db.Uuid
+  sender          User              @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+  message         String
+  messageType     MessageType       @default(TEXT)
+  edited          Boolean           @default(false)
+  editedAt        DateTime?
+  parentMessageId String?           @db.Uuid
+  parentMessage   Message?          @relation("MessageReplies", fields: [parentMessageId], references: [id], onDelete: Cascade)
+  replies         Message[]         @relation("MessageReplies")
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  
+  reactions       MessageReaction[]
+
+  @@index([conversationId])
+}
+
+model MessageReaction {
+  id        String   @id @default(uuid()) @db.Uuid
+  messageId String   @db.Uuid
+  message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  userId    String   @db.Uuid
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  emoji     String
+  createdAt DateTime @default(now())
+
+  @@unique([messageId, userId, emoji])
+}
+
+model Notification {
+  id          String           @id @default(uuid()) @db.Uuid
+  userId      String           @db.Uuid
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title       String
+  description String
+  type        NotificationType
+  isRead      Boolean          @default(false)
+  actionUrl   String?
+  createdAt   DateTime         @default(now())
+
+  @@index([userId])
+}
+
+enum Permission {
+  VIEW
+  DOWNLOAD
+  EDIT
+  OWNER
+}
+
+model Folder {
+  id         String   @id @default(uuid()) @db.Uuid
+  name       String
+  parentId   String?  @db.Uuid
+  parent     Folder?  @relation("FolderHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  subfolders Folder[] @relation("FolderHierarchy")
+  projectId  String?  @db.Uuid
+  project    Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdBy  String   @db.Uuid
+  creator    User     @relation("FolderCreator", fields: [createdBy], references: [id], onDelete: Cascade)
+  files      File[]
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([projectId])
+  @@index([parentId])
+}
+
+model File {
+  id           String           @id @default(uuid()) @db.Uuid
+  name         String
+  originalName String
+  publicId     String
+  url          String
+  thumbnailUrl String?
+  mimeType     String
+  extension    String
+  size         Int
+  folderId     String?          @db.Uuid
+  folder       Folder?          @relation(fields: [folderId], references: [id], onDelete: Cascade)
+  projectId    String?          @db.Uuid
+  project      Project?         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  taskId       String?          @db.Uuid
+  task         Task?            @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  uploadedBy   String           @db.Uuid
+  uploader     User             @relation("FileUploader", fields: [uploadedBy], references: [id], onDelete: Cascade)
+  version      Int              @default(1)
+  isDeleted    Boolean          @default(false)
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  versions     FileVersion[]
+  permissions  FilePermission[]
+
+  @@index([folderId])
+  @@index([projectId])
+  @@index([taskId])
+}
+
+model FileVersion {
+  id         String   @id @default(uuid()) @db.Uuid
+  fileId     String   @db.Uuid
+  file       File     @relation(fields: [fileId], references: [id], onDelete: Cascade)
+  version    Int
+  publicId   String
+  url        String
+  uploadedBy String   @db.Uuid
+  uploader   User     @relation("FileVersionUploader", fields: [uploadedBy], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@index([fileId])
+}
+
+model FilePermission {
+  id         String     @id @default(uuid()) @db.Uuid
+  fileId     String     @db.Uuid
+  file       File       @relation(fields: [fileId], references: [id], onDelete: Cascade)
+  userId     String     @db.Uuid
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  permission Permission
+
+  @@unique([fileId, userId])
+  @@index([fileId])
+  @@index([userId])
+}
